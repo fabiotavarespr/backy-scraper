@@ -1,0 +1,100 @@
+version: '3.7'
+
+services:
+
+  #curl -X POST \
+  #http://conductor-server:8080/api/workflow \
+  #-H 'Cache-Control: no-cache' \
+  #-H 'Content-Type: application/json' \
+  # -d '{
+  #"name": "backup_workflow",
+  #"version": 1,
+  #"correlationId": "mnbvcxz",
+  #"input": {
+  #  "pool": "volumes",
+  #  "name": "myimage"
+  # },
+  #"taskToDomain": {
+  # }
+  #}'
+  
+  backy-scraper:
+    build: .
+    image: perfil-digital-agro/backy-scraper
+    environment:
+      - CONDUCTOR_HOST=conductor-server
+      - CONDUCTOR_PORT=8080
+      - LOG_LEVEL=debug
+      # - PRE_BACKUP_COMMAND=dd if=/dev/zero of=/backup-source/TESTFILE bs=100MB count=2
+      # - POST_BACKUP_COMMAND=rm /backup-source/TESTFILE
+      - PRE_BACKUP_COMMAND=rbd snap create volumes/imagetest-3@backup
+      - POST_BACKUP_COMMAND=rbd snap rm volumes/imagetest-3@backup
+      - SOURCE_DATA_PATH=rbd://volumes/imagetest-3@backup
+      - MONITOR_HOSTS=${HOST_IP}:6789
+      - ETCD_URL=http://${HOST_IP}:12379
+      - PROTECT_YOUNG_BACKUP_DAYS=0
+      - INDEX_DB_ADDRESS=sqlite:////var/lib/backy2/backy.sqlite
+      #- INDEX_DB_ADDRESS=postgres://postgres:postgres@172.20.10.3:5000/backy2
+      # - TARGET_DATA_BACKEND=azureblob
+      - TARGET_DATA_BACKEND=file
+      # - S3_AWS_HTTPS=false
+      # - S3_AWS_HOST=s3proxy
+      # - S3_AWS_PORT=80
+      # - S3_AWS_ACCESS_KEY_ID=local-identity
+      # - S3_AWS_SECRET_ACCESS_KEY=local-credential
+      # - S3_AWS_BUCKET_NAME=ceph-backy2-test
+      - AZURE_ACCESS_KEY_ID=local-identity
+      - AZURE_SECRET_ACCESS_KEY=local-credential
+      - AZURE_BUCKET_NAME=ceph-backy2-test
+    #network_mode: host
+    #pid: host
+    privileged: true
+    volumes:
+      - /mnt:/mnt
+      - /dev:/dev
+      - /sys:/sys
+      - /lib:/lib
+
+  conductor-server:
+    image: ggrcha/conductor-backy
+    environment:
+      - DYNOMITE_HOSTS=dynomite:8102:us-east-1c
+      - ELASTICSEARCH_URL=elasticsearch:9300
+      - LOADSAMPLE=false
+      - PROVISIONING_UPDATE_EXISTING_TASKS=false
+    ports:
+      - 8080:8080
+
+  conductor-ui:
+    image: flaviostutz/conductor-ui
+    environment:
+      - WF_SERVER=http://conductor-server:8080/api/
+    ports:
+      - 5000:5000
+
+  dynomite:
+    image: flaviostutz/dynomite:0.7.5
+    ports:
+      - 8102:8102
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:5.6.8
+    environment:
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - transport.host=0.0.0.0
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+    ports:
+      - 9200:9200
+      - 9300:9300
+
+###########################################################################################
+# Network para funfar local em linux sem detonar sua rede.
+###########################################################################################
+#networks:
+# default:
+#   ipam:
+#     driver: default
+#     config:
+#       - subnet: 192.168.5.0/24
+

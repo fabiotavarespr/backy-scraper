@@ -1,0 +1,38 @@
+stages:
+- build
+- undeploy
+- deploy
+
+variables:
+  CONTAINER_RELEASE_IMAGE: registry.c0.az01.sandmanbb.com/$CI_PROJECT_PATH:$CI_COMMIT_TAG
+
+before_script:
+  - echo $CONTAINER_RELEASE_IMAGE
+  - docker login -u $REGISTRY_USER -p $REGISTRY_PASSWORD registry.c0.az01.sandmanbb.com
+
+build:
+  stage: build
+  only:
+    - tags
+  script:
+    - docker-compose -f docker-compose.yml build 
+    - docker-compose -f docker-compose.yml push
+  tags:
+    - az-sandman-01
+
+undeploy:
+  stage: undeploy
+  only:
+    - tags
+  script: docker stack down $CI_PROJECT_NAME
+  tags:
+    - az02-standalone-lite
+
+deploy:
+  stage: deploy
+  only:
+    - tags
+  script:
+    - docker stack up --compose-file docker-compose.yml $CI_PROJECT_NAME --with-registry-auth
+  tags:
+    - az02-standalone-lite

@@ -1,0 +1,7 @@
+version: '3.7'
+
+services:
+  backy-scraper:
+    build: .
+    image: ${CONTAINER_RELEASE_IMAGE}
+ 
