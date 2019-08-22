@@ -1,8 +1,12 @@
 package main
 
-import "github.com/ggrcha/conductor-go-client"
+import (
+	"os"
+
+	"github.com/ggrcha/conductor-go-client"
+)
 
 func main() {
-	c := conductor.NewConductorWorker("http://conductor-server:8080/api", 2, 10000)
+	c := conductor.NewConductorWorker("http://"+os.Getenv("CONDUCTOR_HOST")+":"+os.Getenv("CONDUCTOR_PORT")+"/api", 2, 10000)
 	c.Start("backy_scrap", backyWorker, true)
 }
