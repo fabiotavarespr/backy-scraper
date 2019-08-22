@@ -8,5 +8,5 @@ import (
 
 func main() {
 	c := conductor.NewConductorWorker("http://"+os.Getenv("CONDUCTOR_HOST")+":"+os.Getenv("CONDUCTOR_PORT")+"/api", 2, 10000)
-	c.Start("backy_scrap", backyWorker, true)
+	c.Start(os.Getenv("CONDUCTOR_WORKNAME"), backyWorker, true)
 }
