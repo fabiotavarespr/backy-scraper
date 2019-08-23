@@ -28,7 +28,7 @@ func getPropertiesFromWorkerConfig(t *task.Task) (map[string]string, error) {
 	return configMap, nil
 }
 
-func backyWorker(t *task.Task) (taskResult *task.TaskResult, err error) {
+func backyWorkerBackup(t *task.Task) (taskResult *task.TaskResult, err error) {
 
 	// pool and name
 	var p, n string
@@ -82,6 +82,53 @@ func backyWorker(t *task.Task) (taskResult *task.TaskResult, err error) {
 	return taskResult, err
 }
 
+func backyWorkerRemove(t *task.Task) (taskResult *task.TaskResult, err error) {
+
+	// dataId
+	var id string
+
+	// output data
+	od := make(map[string]interface{})
+
+	configMap, err := getPropertiesFromWorkerConfig(t)
+	if err != nil {
+		err = errors.New("could't parse workerConfig paramenters, must be key=value;key=value and is " + t.InputData["workerConfig"].(string))
+		taskResult = task.NewTaskResult(t)
+		taskResult.Status = "FAILED"
+		taskResult.OutputData = od
+		return taskResult, err
+	}
+
+	// retrieves input data
+	if !isValidTask(configMap) {
+		err = errors.New("invalid input parameters")
+		taskResult = task.NewTaskResult(t)
+		taskResult.Status = "FAILED"
+		taskResult.OutputData = od
+		return taskResult, err
+	}
+
+	id, _ = t.InputData["dataId"].(string)
+
+	logrus.Infof("task-id: %s / dataId: %s", t.TaskId, id)
+
+	id, lErr := doRemoveCleanup(id)
+
+	if lErr != nil {
+		err = lErr
+		taskResult = task.NewTaskResult(t)
+		taskResult.Status = "FAILED"
+		taskResult.OutputData = od
+		return taskResult, err
+	}
+
+	taskResult = task.NewTaskResult(t)
+	taskResult.Status = "COMPLETED"
+	err = nil
+
+	return taskResult, err
+}
+
 func doBackup(p, i string) (string, error) {
 
 	backyCmd := cmd.NewCmd("bash", "diff-bkp.sh", p, i)
@@ -103,4 +150,35 @@ func doBackup(p, i string) (string, error) {
 	id := rex.FindStringSubmatch(strings.Join(finalStatus.Stdout, "\r\n"))
 
 	return id[1], nil
+}
+
+func doRemoveCleanup(id string) (string, error) {
+
+	// Remove Backup command..
+	backyCmd := cmd.NewCmd("backy2", "rm", id)
+	statusChan := backyCmd.Start()
+
+	finalStatus := <-statusChan
+
+	log.Println("diff-bkp out: ", finalStatus.Stdout)
+	log.Println("diff-bkp err: ", finalStatus.Stderr)
+
+	if finalStatus.Exit != 0 {
+		return "", (errors.New("backup remove failed"))
+	}
+
+	// Cleanup backy2 at selected object storage
+	backyCmd2 := cmd.NewCmd("backy2", "cleanup")
+	statusChan2 := backyCmd2.Start()
+
+	finalStatus2 := <-statusChan2
+
+	log.Println("diff-bkp out: ", finalStatus2.Stdout)
+	log.Println("diff-bkp err: ", finalStatus2.Stderr)
+
+	if finalStatus2.Exit != 0 {
+		return "", (errors.New("backup cleanup failed"))
+	}
+
+	return "Backup removed and cleaned", nil
 }
