@@ -58,5 +58,6 @@ ENV PRE_POST_TIMEOUT '7200'
 ENV PRE_BACKUP_COMMAND ''
 ENV POST_BACKUP_COMMAND ''
 ENV INDEX_DB_ADDRESS 'sqlite:////var/lib/backy2/backy.sqlite'
+ENV CONDUCTOR_WORKNAME 'backup'
 
 CMD ["bash","checkIsUp.sh"]

@@ -24,6 +24,7 @@ services:
     environment:
       - CONDUCTOR_HOST=conductor-server
       - CONDUCTOR_PORT=8080
+      - CONDUCTOR_WORKNAME=backup
       - LOG_LEVEL=debug
       # - PRE_BACKUP_COMMAND=dd if=/dev/zero of=/backup-source/TESTFILE bs=100MB count=2
       # - POST_BACKUP_COMMAND=rm /backup-source/TESTFILE
@@ -49,6 +50,8 @@ services:
     #network_mode: host
     #pid: host
     privileged: true
+    networks:
+      - local-backy
     volumes:
       - /mnt:/mnt
       - /dev:/dev
@@ -56,7 +59,8 @@ services:
       - /lib:/lib
 
   conductor-server:
-    image: ggrcha/conductor-backy
+    image: flaviostutz/backtor-conductor
+    restart: always
     environment:
       - DYNOMITE_HOSTS=dynomite:8102:us-east-1c
       - ELASTICSEARCH_URL=elasticsearch:9300
@@ -64,6 +68,8 @@ services:
       - PROVISIONING_UPDATE_EXISTING_TASKS=false
     ports:
       - 8080:8080
+    networks:
+      - local-backy  
 
   conductor-ui:
     image: flaviostutz/conductor-ui
@@ -71,11 +77,15 @@ services:
       - WF_SERVER=http://conductor-server:8080/api/
     ports:
       - 5000:5000
+    networks:
+      - local-backy
 
   dynomite:
     image: flaviostutz/dynomite:0.7.5
     ports:
       - 8102:8102
+    networks:
+      - local-backy
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:5.6.8
@@ -87,6 +97,12 @@ services:
     ports:
       - 9200:9200
       - 9300:9300
+    networks:
+      - local-backy
+
+
+networks:
+  local-backy:
 
 ###########################################################################################
 # Network para funfar local em linux sem detonar sua rede.

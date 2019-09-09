@@ -35,6 +35,5 @@ cat /etc/backy.cfg
 tail -f /var/log/backy.log&
 while true; do if [ -f /var/log/backy.log ]; then rm /var/log/backy.log; fi; sleep 86400; done&
 
-/bin/backy-scraper
-
+/bin/backy-scraper 
 

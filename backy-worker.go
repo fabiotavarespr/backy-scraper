@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"regexp"
 	"strings"
@@ -72,7 +73,8 @@ func backyWorkerBackup(t *task.Task) (taskResult *task.TaskResult, err error) {
 		return taskResult, err
 	}
 
-	od["id"] = id
+	od["dataId"] = id
+	od["dataSizeMB"] = "0"
 
 	taskResult = task.NewTaskResult(t)
 	taskResult.Status = "COMPLETED"
@@ -149,6 +151,7 @@ func doBackup(p, i string) (string, error) {
 	}
 	id := rex.FindStringSubmatch(strings.Join(finalStatus.Stdout, "\r\n"))
 
+	fmt.Println(id)
 	return id[1], nil
 }
 
