@@ -74,7 +74,7 @@ func backyWorkerBackup(t *task.Task) (taskResult *task.TaskResult, err error) {
 	}
 
 	od["dataId"] = id
-	od["dataSizeMB"] = "0"
+	od["dataSizeMB"] = 1
 
 	taskResult = task.NewTaskResult(t)
 	taskResult.Status = "COMPLETED"

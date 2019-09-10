@@ -2,21 +2,21 @@ version: '3.7'
 
 services:
 
-  #curl -X POST \
-  #http://conductor-server:8080/api/workflow \
-  #-H 'Cache-Control: no-cache' \
-  #-H 'Content-Type: application/json' \
+  # curl -X POST \
+  # http://conductor-server:8080/api/workflow \
+  # -H 'Cache-Control: no-cache' \
+  # -H 'Content-Type: application/json' \
   # -d '{
-  #"name": "backup_workflow",
-  #"version": 1,
-  #"correlationId": "mnbvcxz",
-  #"input": {
-  #  "pool": "volumes",
-  #  "name": "myimage"
+  # "name": "create_backup",
+  # "version": 1,
+  # "correlationId": "mnbvcxz",
+  # "input": {
+  #  "backupName": "testeimage",
+  #  "workerConfig": "pool=default;image=testimage"
   # },
-  #"taskToDomain": {
+  # "taskToDomain": {
   # }
-  #}'
+  # }'
   
   backy-scraper:
     build: .
@@ -25,6 +25,7 @@ services:
       - CONDUCTOR_HOST=conductor-server
       - CONDUCTOR_PORT=8080
       - CONDUCTOR_WORKNAME=backup
+      # - CONDUCTOR_WORKNAME=remove
       - LOG_LEVEL=debug
       # - PRE_BACKUP_COMMAND=dd if=/dev/zero of=/backup-source/TESTFILE bs=100MB count=2
       # - POST_BACKUP_COMMAND=rm /backup-source/TESTFILE
